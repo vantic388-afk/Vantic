@@ -2769,26 +2769,53 @@ function bindAdminImageUpload(){
   });
 }
 
-function saveProductForm(){
-  const id = document.getElementById('pfId').value;
-  const name = document.getElementById('pfName').value.trim();
-  if(!name){ alert('Product name is required.'); return; }
-  const images = pendingFormImages.length ? pendingFormImages.slice() : ['PLACEHOLDER:new'];
-  const data = {
-    name,
-    category: document.getElementById('pfCategory').value,
-    collection: document.getElementById('pfCollection').value.trim() || 'Vault Essentials',
-    price: document.getElementById('pfPrice').value.trim(),
-    description: document.getElementById('pfDescription').value.trim() || 'A piece from the VANTIC vault.',
-    images: images,
-    image: images[0] // kept in sync for any older code path that still reads the single field
-  };
-  if(id){
-    const idx = PRODUCTS.findIndex(p => p.id === id);
-    PRODUCTS[idx] = {...PRODUCTS[idx], ...data};
-  } else {
-    PRODUCTS.push({id: 'p'+Date.now(), ...data});
+async function saveProductForm() {
+  try {
+    alert("1. Save initiated!"); 
+    
+    const name = document.getElementById('pfName').value.trim();
+    const category = document.getElementById('pfCategory').value;
+    const collection = document.getElementById('pfCollection').value.trim();
+    const description = document.getElementById('pfDescription').value.trim();
+    const price = document.getElementById('pfPrice').value.trim();
+    
+    alert("2. Input fields read successfully!"); 
+    
+    // Check for images
+    if (pendingFormImages && pendingFormImages.length > 0) {
+      alert("3. Image data found! Count: " + pendingFormImages.length);
+    }
+    
+    alert("4. Attempting local save...");
+    const images = pendingFormImages.length ? pendingFormImages.slice() : ['PLACEHOLDER:new'];
+    const data = {
+      name,
+      category,
+      collection: collection || 'Vault Essentials',
+      price,
+      description: description || 'A piece from the VANTIC vault.',
+      images: images,
+      image: images[0]
+    };
+
+    const id = document.getElementById('pfId').value;
+    if (id) {
+      const idx = PRODUCTS.findIndex(p => p.id === id);
+      PRODUCTS[idx] = { ...PRODUCTS[idx], ...data };
+    } else {
+      PRODUCTS.push({ id: 'p' + Date.now(), ...data });
+    }
+    
+    persistProducts();
+    renderProducts();
+    refreshAdminUI();
+    closeOverlay('productFormOverlay');
+    alert("Product saved successfully!");
+  } catch (error) {
+    alert("CRITICAL ERROR DETECTED: " + error.message);
   }
+}
+
   persistProducts();
   renderProducts();
   refreshAdminUI();
